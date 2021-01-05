@@ -30,7 +30,9 @@ def generate_level(level):
             if level[y][x] == '.':
                 Tile('empty', x, y)
             elif level[y][x] == '#':
-                Tile('wall', x, y)
+                Tile('brick', x, y)
+            elif level[y][x] == '!':
+                Tile('metal', x, y)
             elif level[y][x] == '@':
                 Tile('empty', x, y)
                 new_player = Player(x, y)
@@ -39,10 +41,11 @@ def generate_level(level):
 
 
 tile_images = {
-    'wall': load_image('brick.png'),
-    'empty': load_image('grass.png')
+    'brick': load_image('brick.png'),
+    'empty': load_image('grass.png'),
+    'metal': load_image('metal.png')
 }
-player_image = load_image('test_tank.png')
+player_image = load_image('test_tank_0.png')
 
 tile_width = tile_height = 50
 
@@ -147,15 +150,19 @@ if __name__ == '__main__':
         if keys[pygame.K_LEFT] and pl_x > 0:
             pl_x -= speed
             lastMove = 'left'
+            player_image = load_image('test_tank_270.png')
         elif keys[pygame.K_RIGHT] and pl_x < 450:
             pl_x += speed
             lastMove = 'right'
+            player_image = load_image('test_tank_90.png')
         elif keys[pygame.K_UP] and pl_y > 0:
             pl_y -= speed
             lastMove = 'up'
+            player_image = load_image('test_tank_0.png')
         elif keys[pygame.K_DOWN] and pl_y < 450:
             pl_y += speed
             lastMove = 'down'
+            player_image = load_image('test_tank_180.png')
 
         player_group.draw(screen)
         tiles_group.draw(screen)
