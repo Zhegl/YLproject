@@ -13,10 +13,44 @@ all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 alive_tanks = 0
+
+
 def gameover():
-    pass
+    screen.fill((0, 0, 0))
+    load_sound('dead_music.mp3')
+    pygame.mixer.music.play()
+    # global screen
+    # size = 650, 500
+    image = load_image('game_over.png')
+    image_rect = image.get_rect()
+    # screen = pygame.display.set_mode(image, size)
+    screen.blit(image, image_rect)
+    pygame.display.flip()
+    pygame.time.wait(5000)
+    sys.quit()
+    # screen.fill(0, 0, 0)
+    # pygame.display.update()
+
+
 def win():
-    pass
+    screen.fill((0, 0, 0))
+    font = pygame.font.Font(None, 100)
+    text = font.render('You Win!', True, (255, 255, 255))
+    text_x = size[0] // 2 - text.get_width() // 2
+    text_y = size[1] // 2 - text.get_height() // 2
+    screen.blit(text, (text_x, text_y))
+    pygame.display.flip()
+    pygame.time.wait(5000)
+
+
+def load_sound(name, colorkey=None):
+    fullname = os.path.join('sound', name)
+    if not os.path.isfile(fullname):
+        print(f"Файл со звуком '{fullname}' не найден")
+        sys.exit()
+    sound = pygame.mixer.music.load(fullname)
+    return sound
+
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('textures', name)
@@ -72,7 +106,8 @@ enemys = []
 collisions = []
 player_bullets = 0
 pl_xp = 5
-turn = 990
+turn = 1100
+
 
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type=None, pos_x=None, pos_y=None):
@@ -107,7 +142,8 @@ class Player(pygame.sprite.Sprite):
         for i in range(len(bullets) - 1, -1, -1):
 
             el = bullets[i]
-            if pl_x < el.x < pl_x + 50 and pl_y < el.y < pl_y + 50 and not (el.isplayer):
+            if pl_x < el.x < pl_x + 50 and \
+                    pl_y < el.y < pl_y + 50 and not (el.isplayer):
                 del bullets[i]
                 global pl_xp
                 pl_xp -= 1
@@ -123,11 +159,15 @@ class CollisionBullet:
     def check(self):
         for i in range(len(bullets) - 1, -1, -1):
             el = bullets[i]
-            if self.pos_x < el.x < self.pos_x + 50 and self.pos_y < el.y < self.pos_y + 50:
+            if self.pos_x < el.x < self.pos_x + 50 and \
+                    self.pos_y < el.y < self.pos_y + 50:
                 if el.isplayer:
                     global player_bullets
-                    player_bullets -= 1
+                    player_bullets = 0
                 del bullets[i]
+
+
+previous_time = 0
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -145,33 +185,44 @@ class Enemy(pygame.sprite.Sprite):
 
     def shoot(self):
         bullets.append(Snaryad(round(self.pos_x + 50 // 2),
-                               round(self.pos_y + 50 // 2), 3, (0, 0, 0), self.last_der, False))
+                               round(self.pos_y + 50 // 2), 3, (0, 0, 0),
+                               self.last_der, False))
+        previous_time = pygame.time.get_ticks()
 
     def check(self):
+        global alive_tanks
         for i in range(len(bullets) - 1, -1, -1):
             el = bullets[i]
-            if self.pos_x < el.x < self.pos_x + 50 and self.pos_y < el.y < self.pos_y + 50 and el.isplayer:
+            if self.pos_x < el.x < self.pos_x + 50 and \
+                    self.pos_y < el.y < self.pos_y + 50 and el.isplayer:
                 self.hp -= 1
                 del bullets[i]
                 global player_bullets
-                player_bullets -= 1
+                player_bullets = 0
         if self.hp <= 0:
+            print(self.hp <= 0 and 0 < alive_tanks < 4)
             self.alivee = False
             self.pos_y = 1000
             self.pos_x = 1000
-            global alive_tanks
             alive_tanks -= 1
 
     def move(self):
+        global previous_time
+        current_time = pygame.time.get_ticks()
         if randint(0, 1000) > 900:
-            if self.last_der == -2 and self.pos_y > pl_y and abs(self.pos_x - pl_x) <= 50:
-                self.shoot()
-            if self.last_der == 2 and self.pos_y < pl_y and abs(self.pos_x - pl_x) <= 50:
-                self.shoot()
-            if self.last_der == -1 and self.pos_x > pl_x and abs(self.pos_y - pl_y) <= 50:
-                self.shoot()
-            if self.last_der == 1 and self.pos_x < pl_x and abs(self.pos_y - pl_y) <= 50:
-                self.shoot()
+            if current_time - previous_time > 500:
+                if self.last_der == -2 and self.pos_y > pl_y and \
+                        abs(self.pos_x - pl_x) <= 50:
+                    self.shoot()
+                if self.last_der == 2 and self.pos_y < pl_y and \
+                        abs(self.pos_x - pl_x) <= 50:
+                    self.shoot()
+                if self.last_der == -1 and self.pos_x > pl_x and \
+                        abs(self.pos_y - pl_y) <= 50:
+                    self.shoot()
+                if self.last_der == 1 and self.pos_x < pl_x and \
+                        abs(self.pos_y - pl_y) <= 50:
+                    self.shoot()
 
         if self.update() and randint(0, 1000) < turn:
             if self.last_der == -2:
@@ -257,13 +308,13 @@ class Snaryad():
 
     # def draw(self, win):
     # pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
-    def draw(self, win):
+    def draw(self, wind):
         screen.blit(self.image, (self.x - 25, self.y - 25))
 
 
 if __name__ == '__main__':
     pygame.init()
-    size = 500, 500
+    size = 650, 500
     screen = pygame.display.set_mode(size)
     level_map = load_level("map.map")
     pl_x = 200
@@ -273,6 +324,7 @@ if __name__ == '__main__':
     running = True
     bullets = []
     while running:
+        print(alive_tanks)
         for i in pygame.event.get():
             if i.type == pygame.QUIT:
                 running = False
@@ -314,8 +366,9 @@ if __name__ == '__main__':
                     bullet.y += bullet.vel + 5
                 else:
                     bullets.pop(bullets.index(bullet))
-
+        # pygame.mixer.music.load('/home/alpha/Документы/project_tank/YLproject/sound/ride_tank.mp3')
         if proverka.update():
+            # pygame.mixer.music.play()
             if keys[pygame.K_LEFT] and pl_x > 0:
                 pl_x -= speed
                 lastMove = 'left'
