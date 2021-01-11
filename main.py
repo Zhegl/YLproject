@@ -3,6 +3,7 @@ import sys
 import pygame
 from random import randint, choice
 
+pygame.init()
 clock = pygame.time.Clock()
 
 fps = 60
@@ -13,6 +14,8 @@ all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 alive_tanks = 0
+sound1 = pygame.mixer.Sound('sound/kill.wav')
+sound2 = pygame.mixer.Sound('sound/shoot.wav')
 
 
 def gameover():
@@ -89,6 +92,8 @@ def generate_level(level):
                 enemys.append(Enemy(x, y, 5))
                 alive_tanks += 1
                 # вернем игрока, а также размер поля в клетках
+    load_sound('music.mp3')
+    pygame.mixer.music.play()
     return new_player, x, y
 
 
@@ -98,7 +103,6 @@ tile_images = {
     'metal': load_image('metal.png')
 }
 player_image = load_image('test_tank_0.png')
-
 
 bullet_image = load_image('bullet.png')
 tile_width = tile_height = 50
@@ -184,6 +188,7 @@ class Enemy(pygame.sprite.Sprite):
         self.last_der = -1
 
     def shoot(self):
+        sound2.play()
         bullets.append(Snaryad(round(self.pos_x + 50 // 2),
                                round(self.pos_y + 50 // 2), 3, (0, 0, 0),
                                self.last_der, False))
@@ -200,11 +205,12 @@ class Enemy(pygame.sprite.Sprite):
                 global player_bullets
                 player_bullets = 0
         if self.hp <= 0:
-            print(self.hp <= 0 and 0 < alive_tanks < 4)
-            self.alivee = False
             self.pos_y = 1000
             self.pos_x = 1000
-            alive_tanks -= 1
+            if self.alivee:
+                alive_tanks -= 1
+                sound1.play()
+            self.alivee = False
 
     def move(self):
         global previous_time
@@ -324,7 +330,6 @@ if __name__ == '__main__':
     running = True
     bullets = []
     while running:
-        print(alive_tanks)
         for i in pygame.event.get():
             if i.type == pygame.QUIT:
                 running = False
@@ -335,6 +340,7 @@ if __name__ == '__main__':
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_SPACE]:
+            sound2.play()
             if lastMove == 'up':
                 direction = -2
             elif lastMove == 'down':
