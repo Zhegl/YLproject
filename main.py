@@ -2,15 +2,17 @@ import os
 import sys
 import pygame
 from random import randint, choice
+import random
 
 pygame.init()
 clock = pygame.time.Clock()
 
 fps = 60
 player = None
-
+screen_rect = (0, 0, 500, 500)
 # группы спрайтов
 all_sprites = pygame.sprite.Group()
+particle_group = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 alive_tanks = 0
@@ -63,6 +65,46 @@ def load_image(name, colorkey=None):
         sys.exit()
     image = pygame.image.load(fullname)
     return image
+
+
+def create_particles(position):
+    # количество создаваемых частиц
+    particle_count = 20
+    # возможные скорости
+    numbers = range(-5, 6)
+    for _ in range(particle_count):
+        Particle(position, random.choice(numbers), random.choice(numbers))
+
+
+class Particle(pygame.sprite.Sprite):
+    # сгенерируем частицы разного размера
+    fire = [load_image("explosion.png")]
+    for scale in (5, 10, 20):
+        fire.append(pygame.transform.scale(fire[0], (scale, scale)))
+
+    def __init__(self, pos, dx, dy):
+        super().__init__(particle_group)
+        self.image = random.choice(self.fire)
+        self.rect = self.image.get_rect()
+
+        # у каждой частицы своя скорость — это вектор
+        self.velocity = [dx, dy]
+        # и свои координаты
+        self.rect.x, self.rect.y = pos
+
+        # гравитация будет одинаковой (значение константы)
+        self.gravity = 1
+
+    def update(self):
+        # применяем гравитационный эффект:
+        # движение с ускорением под действием гравитации
+        self.velocity[1] += self.gravity
+        # перемещаем частицу
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        # убиваем, если частица ушла за экран
+        if not self.rect.colliderect(screen_rect):
+            self.kill()
 
 
 def generate_level(level):
@@ -151,6 +193,7 @@ class Player(pygame.sprite.Sprite):
                 del bullets[i]
                 global pl_xp
                 pl_xp -= 1
+                create_particles((pl_x, pl_y))
             if pl_xp <= 0:
                 gameover()
 
@@ -204,6 +247,7 @@ class Enemy(pygame.sprite.Sprite):
                 del bullets[i]
                 global player_bullets
                 player_bullets = 0
+                create_particles((self.pos_x, self.pos_y))
         if self.hp <= 0:
             self.pos_y = 1000
             self.pos_x = 1000
@@ -312,8 +356,6 @@ class Snaryad():
         self.rect = self.image.get_rect().move(x, y)
         self.isplayer = isplayer
 
-    # def draw(self, win):
-    # pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
     def draw(self, wind):
         screen.blit(self.image, (self.x - 25, self.y - 25))
 
@@ -448,6 +490,7 @@ if __name__ == '__main__':
                 pl_y -= speed
                 lastMove = 'up'
                 player_image = load_image('test_tank_0.png')
+        screen.fill((0, 0, 0))
         proverka.check()
         for i in range(len(collisions)):
             collisions[i].check()
@@ -458,7 +501,8 @@ if __name__ == '__main__':
 
         for bullet in bullets:
             bullet.draw(screen)
-
+        particle_group.update()
+        particle_group.draw(screen)
         clock.tick(fps)
         pygame.display.update()
 pygame.quit()
