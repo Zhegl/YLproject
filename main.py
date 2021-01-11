@@ -6,7 +6,7 @@ import random
 
 pygame.init()
 clock = pygame.time.Clock()
-
+start_ticks = pygame.time.get_ticks()
 fps = 60
 player = None
 screen_rect = (0, 0, 500, 500)
@@ -380,7 +380,6 @@ if __name__ == '__main__':
         proverka = Player(pl_x, pl_y)
 
         keys = pygame.key.get_pressed()
-
         if keys[pygame.K_SPACE]:
             sound2.play()
             if lastMove == 'up':
@@ -392,11 +391,11 @@ if __name__ == '__main__':
             elif lastMove == 'left':
                 direction = -1
 
-            if player_bullets < 1:
+            if (pygame.time.get_ticks() - start_ticks) / 1000 > 0.5:
                 bullets.append(Snaryad(round(pl_x + 50 // 2),
                                        round(pl_y + 50 // 2), 3, (0, 0, 0),
                                        direction, True))
-                player_bullets += 1
+                start_ticks = pygame.time.get_ticks()
 
         for bullet in bullets:
             if bullet.direction == 1 or bullet.direction == -1:
@@ -505,4 +504,5 @@ if __name__ == '__main__':
         particle_group.draw(screen)
         clock.tick(fps)
         pygame.display.update()
+        print(player_bullets)
 pygame.quit()
