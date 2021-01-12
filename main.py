@@ -18,34 +18,146 @@ player_group = pygame.sprite.Group()
 alive_tanks = 0
 sound1 = pygame.mixer.Sound('sound/kill.wav')
 sound2 = pygame.mixer.Sound('sound/shoot.wav')
+points = [(190, 250, 'Играть', (255, 255, 255), (255, 100, 50), 0),
+          (190, 300, 'Выход', (255, 255, 255), (255, 100, 50), 1)]
+points_level = [(50, 50, '1', (255, 255, 255), (255, 100, 50), 0),
+                (100, 50, '2', (255, 255, 255), (255, 100, 50), 1),
+                (150, 50, '3', (255, 255, 255), (255, 100, 50), 2),
+                (200, 50, '4', (255, 255, 255), (255, 100, 50), 3),
+                (250, 50, '5', (255, 255, 255), (255, 100, 50), 4)]
 
 
-def gameover():
+class Menu():
+    def __init__(self, points):
+        self.points = points
+
+    def render(self, screen, number_points):
+        font_name = pygame.font.Font(None, 80)
+        screen.blit(font_name.render(
+            'Battle Tank', True, (255, 100, 50)), (98, 100))
+        font = pygame.font.Font(None, 50)
+        for i in self.points:
+            if number_points == i[5]:
+                screen.blit(font.render(i[2], True, i[4]), (i[0], i[1]))
+            else:
+                screen.blit(font.render(i[2], True, i[3]), (i[0], i[1]))
+
+    def menu(self, screen):
+        point = 0
+        done = True
+        while done:
+            screen.fill((0, 0, 0))
+            mp = pygame.mouse.get_pos()
+            for i in self.points:
+                if mp[0] > i[0] and mp[0] < i[0] + 155 and \
+                        mp[1] > i[1] and mp[1] < i[1] + 50:
+                    point = i[5]
+            self.render(screen, point)
+
+            for e in pygame.event.get():
+                if e.type == pygame.QUIT:
+                    sys.exit()
+                if e.type == pygame.KEYDOWN:
+                    if e.key == pygame.K_ESCAPE:
+                        sys.exit()
+                    if e.key == pygame.K_UP:
+                        if point > 0:
+                            point -= 1
+                    if e.key == pygame.K_DOWN:
+                        if point < len(self.points) - 1:
+                            point += 1
+                    if e.key == pygame.K_RETURN:
+                        if point == 0:
+                            done = False
+                        else:
+                            sys.exit()
+
+                if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                    if point == 0:
+                        done = False
+                    elif point == 1:
+                        sys.exit()
+
+            screen.blit(screen, (0, 0))
+            pygame.display.flip()
+
+
+class Select_level():
+    def __init__(self, points_level):
+        self.points = points_level
+
+    def render(self, screen, number_points):
+        font = pygame.font.Font(None, 50)
+        for i in self.points:
+            if number_points == i[5]:
+                screen.blit(font.render(i[2], True, i[4]), (i[0], i[1]))
+            else:
+                screen.blit(font.render(i[2], True, i[3]), (i[0], i[1]))
+
+    def sel_level(self, screen):
+        point = 0
+        done = True
+        while done:
+            screen.fill((0, 0, 0))
+
+            mp = pygame.mouse.get_pos()
+            for i in self.points:
+                if mp[0] > i[0] and mp[0] < i[0] + 50 and \
+                        mp[1] > i[1] and mp[1] < i[1] + 50:
+                    point = i[5]
+            self.render(screen, point)
+
+            for e in pygame.event.get():
+                if e.type == pygame.QUIT:
+                    sys.exit()
+                if e.type == pygame.KEYDOWN:
+                    if e.key == pygame.K_ESCAPE:
+                        sys.exit()
+                    if e.key == pygame.K_LEFT:
+                        if point > 0:
+                            point -= 1
+                    if e.key == pygame.K_RIGHT:
+                        if point < len(self.points) - 1:
+                            point += 1
+                    if e.key == pygame.K_RETURN:
+                        if point <= 0:
+                            done = False
+                            return '2_lvl.map'
+                if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                    if point <= 0:
+                        done = False
+                        return '2_lvl.map'
+                    # elif point == 1:
+                    #     done = False
+                    #     return '1_lvl.map'
+            screen.blit(screen, (0, 0))
+            pygame.display.flip()
+
+
+def gameover(screen):
     screen.fill((0, 0, 0))
     load_sound('dead_music.mp3')
     pygame.mixer.music.play()
-    # global screen
-    # size = 650, 500
     image = load_image('game_over.png')
     image_rect = image.get_rect()
-    # screen = pygame.display.set_mode(image, size)
     screen.blit(image, image_rect)
     pygame.display.flip()
-    pygame.time.wait(5000)
-    sys.quit()
-    # screen.fill(0, 0, 0)
-    # pygame.display.update()
+    pygame.time.wait(3000)
+    start()
 
 
-def win():
+def win(screen):
+    # global screen
+    size = 500, 500
     screen.fill((0, 0, 0))
     font = pygame.font.Font(None, 100)
-    text = font.render('You Win!', True, (255, 255, 255))
+    text = font.render('You Win!', True, (255, 100, 50))
     text_x = size[0] // 2 - text.get_width() // 2
     text_y = size[1] // 2 - text.get_height() // 2
     screen.blit(text, (text_x, text_y))
     pygame.display.flip()
-    pygame.time.wait(5000)
+    pygame.time.wait(3000)
+    start()
 
 
 def load_sound(name, colorkey=None):
@@ -109,6 +221,7 @@ class Particle(pygame.sprite.Sprite):
 
 def generate_level(level):
     new_player, x, y = None, None, None
+
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '.':
@@ -120,19 +233,20 @@ def generate_level(level):
             elif level[y][x] == '@':
                 Tile('empty', x, y)
                 new_player = Player(x, y)
-            elif level[y][x] == '*':
-                Tile('empty', x, y)
-                enemys.append(Enemy(x, y, 3))
-                global alive_tanks
-                alive_tanks += 1
-            elif level[y][x] == '/':
-                Tile('empty', x, y)
-                enemys.append(Enemy(x, y, 10))
-                alive_tanks += 1
-            elif level[y][x] == '&':
-                Tile('empty', x, y)
-                enemys.append(Enemy(x, y, 5))
-                alive_tanks += 1
+            global alive_tanks
+            if alive_tanks < 3:
+                if level[y][x] == '*':
+                    Tile('empty', x, y)
+                    enemys.append(Enemy(x, y, 3))
+                    alive_tanks += 1
+                elif level[y][x] == '/':
+                    Tile('empty', x, y)
+                    enemys.append(Enemy(x, y, 10))
+                    alive_tanks += 1
+                elif level[y][x] == '&':
+                    Tile('empty', x, y)
+                    enemys.append(Enemy(x, y, 5))
+                    alive_tanks += 1
                 # вернем игрока, а также размер поля в клетках
     load_sound('music.mp3')
     pygame.mixer.music.play()
@@ -176,6 +290,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__(player_group)
         self.image = player_image
         self.rect = self.image.get_rect().move(pos_x, pos_y)
+        global bullets, pl_x, pl_y
 
     def update(self):
         if pygame.sprite.spritecollideany(self, all_sprites):
@@ -183,8 +298,7 @@ class Player(pygame.sprite.Sprite):
         else:
             return True
 
-    def check(self):
-
+    def check(self, screen):
         for i in range(len(bullets) - 1, -1, -1):
 
             el = bullets[i]
@@ -195,11 +309,12 @@ class Player(pygame.sprite.Sprite):
                 pl_xp -= 1
                 create_particles((pl_x, pl_y))
             if pl_xp <= 0:
-                gameover()
+                gameover(screen)
 
 
-class CollisionBullet:
+class CollisionBullet():
     def __init__(self, pos_x=None, pos_y=None):
+        global bullets
         self.pos_x = pos_x * 50
         self.pos_y = pos_y * 50
 
@@ -214,12 +329,10 @@ class CollisionBullet:
                 del bullets[i]
 
 
-previous_time = 0
-
-
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, pos_x=None, pos_y=None, type=3):
         super().__init__(player_group)
+        # global previous_time
         self.hp = type
         self.type = str(type)
 
@@ -229,13 +342,13 @@ class Enemy(pygame.sprite.Sprite):
 
         self.alivee = True
         self.last_der = -1
+        global bullets, pl_x, pl_y
 
     def shoot(self):
         sound2.play()
         bullets.append(Snaryad(round(self.pos_x + 50 // 2),
                                round(self.pos_y + 50 // 2), 3, (0, 0, 0),
                                self.last_der, False))
-        previous_time = pygame.time.get_ticks()
 
     def check(self):
         global alive_tanks
@@ -257,22 +370,26 @@ class Enemy(pygame.sprite.Sprite):
             self.alivee = False
 
     def move(self):
-        global previous_time
+        previous_time = 0
         current_time = pygame.time.get_ticks()
-        if randint(0, 1000) > 900:
-            if current_time - previous_time > 500:
+        if current_time - previous_time > 500:
+            if randint(0, 1000) > 900:
                 if self.last_der == -2 and self.pos_y > pl_y and \
                         abs(self.pos_x - pl_x) <= 50:
                     self.shoot()
+                    previous_time = pygame.time.get_ticks()
                 if self.last_der == 2 and self.pos_y < pl_y and \
                         abs(self.pos_x - pl_x) <= 50:
                     self.shoot()
+                    previous_time = pygame.time.get_ticks()
                 if self.last_der == -1 and self.pos_x > pl_x and \
                         abs(self.pos_y - pl_y) <= 50:
                     self.shoot()
+                    previous_time = pygame.time.get_ticks()
                 if self.last_der == 1 and self.pos_x < pl_x and \
                         abs(self.pos_y - pl_y) <= 50:
                     self.shoot()
+                    previous_time = pygame.time.get_ticks()
 
         if self.update() and randint(0, 1000) < turn:
             if self.last_der == -2:
@@ -311,7 +428,7 @@ class Enemy(pygame.sprite.Sprite):
         else:
             return True
 
-    def draw(self):
+    def draw(self, screen):
         self.move()
         if self.last_der == -2:
             self.image = load_image('enemy_tank_0_' + self.type + '.png')
@@ -356,30 +473,44 @@ class Snaryad():
         self.rect = self.image.get_rect().move(x, y)
         self.isplayer = isplayer
 
-    def draw(self, wind):
+    def draw(self, screen):
         screen.blit(self.image, (self.x - 25, self.y - 25))
 
 
-if __name__ == '__main__':
-    pygame.init()
-    size = 650, 500
+bullets = []
+pl_x, pl_y = 200, 400
+
+
+def start():
+    global pl_xp
+    global alive_tanks
+    global start_ticks
+    global pl_x, pl_y
+    global lastMove
+    pl_xp = 5
+    size = 500, 500
     screen = pygame.display.set_mode(size)
-    level_map = load_level("map.map")
-    pl_x = 200
-    pl_y = 400
+    pl_x, pl_y = 200, 400
+    wind = Menu(points)
+    wind.menu(screen)
+    sel_lvl = Select_level(points_level)
+    lvl_map = sel_lvl.sel_level(screen)
+    level_map = load_level(lvl_map)
     hero, max_x, max_y = generate_level(level_map)
     speed = 1
     running = True
-    bullets = []
+    player_image = load_image('test_tank_0.png')
+    font = pygame.font.Font(None, 30)
     while running:
         for i in pygame.event.get():
             if i.type == pygame.QUIT:
                 running = False
         if alive_tanks == 0:
-            win()
+            win(screen)
         proverka = Player(pl_x, pl_y)
 
         keys = pygame.key.get_pressed()
+
         if keys[pygame.K_SPACE]:
             sound2.play()
             if lastMove == 'up':
@@ -413,9 +544,7 @@ if __name__ == '__main__':
                     bullet.y += bullet.vel + 5
                 else:
                     bullets.pop(bullets.index(bullet))
-        # pygame.mixer.music.load('/home/alpha/Документы/project_tank/YLproject/sound/ride_tank.mp3')
         if proverka.update():
-            # pygame.mixer.music.play()
             if keys[pygame.K_LEFT] and pl_x > 0:
                 pl_x -= speed
                 lastMove = 'left'
@@ -490,19 +619,23 @@ if __name__ == '__main__':
                 lastMove = 'up'
                 player_image = load_image('test_tank_0.png')
         screen.fill((0, 0, 0))
-        proverka.check()
+        proverka.check(screen)
         for i in range(len(collisions)):
             collisions[i].check()
         tiles_group.draw(screen)
         for i in range(len(enemys)):
-            enemys[i].draw()
+            enemys[i].draw(screen)
         screen.blit(player_image, (pl_x, pl_y))
-
         for bullet in bullets:
             bullet.draw(screen)
         particle_group.update()
         particle_group.draw(screen)
+        screen.blit(font.render(f'Здоровье: {str(pl_xp)}', True, (0, 0, 0)), (375, 5))
         clock.tick(fps)
         pygame.display.update()
-        print(player_bullets)
 pygame.quit()
+
+
+if __name__ == '__main__':
+    pygame.init()
+    start()
