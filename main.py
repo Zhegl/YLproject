@@ -126,10 +126,19 @@ class Select_level():
                 if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
                     if point <= 0:
                         done = False
+                        return '1_lvl.map'
+                    elif point == 1:
+                        done = False
                         return '2_lvl.map'
-                    # elif point == 1:
-                    #     done = False
-                    #     return '1_lvl.map'
+                    elif point == 2:
+                        done = False
+                        return '3_lvl.map'
+                    elif point == 3:
+                        done = False
+                        return '4_lvl.map'
+                    elif point == 4:
+                        done = False
+                        return '5_lvl.map'
             screen.blit(screen, (0, 0))
             pygame.display.flip()
 
@@ -220,6 +229,28 @@ class Particle(pygame.sprite.Sprite):
 
 
 def generate_level(level):
+    global enemys
+    enemys = []
+    global collisions
+    collisions = []
+    global all_sprites
+    all_sprites = pygame.sprite.Group()
+    global particle_group
+    particle_group = pygame.sprite.Group()
+    global tiles_group
+    tiles_group = pygame.sprite.Group()
+    global player_group
+    player_group = pygame.sprite.Group()
+    global player_bullets
+    player_bullets = 0
+    global pl_xp
+    pl_xp = 5
+    global turn
+    turn = 1100
+    global bullets
+    bullets = []
+    global alive_tanks
+    alive_tanks = 0
     new_player, x, y = None, None, None
 
     for y in range(len(level)):
@@ -233,20 +264,19 @@ def generate_level(level):
             elif level[y][x] == '@':
                 Tile('empty', x, y)
                 new_player = Player(x, y)
-            global alive_tanks
-            if alive_tanks < 3:
-                if level[y][x] == '*':
-                    Tile('empty', x, y)
-                    enemys.append(Enemy(x, y, 3))
-                    alive_tanks += 1
-                elif level[y][x] == '/':
-                    Tile('empty', x, y)
-                    enemys.append(Enemy(x, y, 10))
-                    alive_tanks += 1
-                elif level[y][x] == '&':
-                    Tile('empty', x, y)
-                    enemys.append(Enemy(x, y, 5))
-                    alive_tanks += 1
+
+            if level[y][x] == '*':
+                Tile('empty', x, y)
+                enemys.append(Enemy(x, y, 3))
+                alive_tanks += 1
+            elif level[y][x] == '/':
+                Tile('empty', x, y)
+                enemys.append(Enemy(x, y, 10))
+                alive_tanks += 1
+            elif level[y][x] == '&':
+                Tile('empty', x, y)
+                enemys.append(Enemy(x, y, 5))
+                alive_tanks += 1
                 # вернем игрока, а также размер поля в клетках
     load_sound('music.mp3')
     pygame.mixer.music.play()
@@ -370,9 +400,9 @@ class Enemy(pygame.sprite.Sprite):
             self.alivee = False
 
     def move(self):
-        previous_time = 0
-        current_time = pygame.time.get_ticks()
-        if current_time - previous_time > 500:
+        previous_time2 = 0
+        current_time2 = pygame.time.get_ticks()
+        if current_time2 - previous_time2 > 500:
             if randint(0, 1000) > 900:
                 if self.last_der == -2 and self.pos_y > pl_y and \
                         abs(self.pos_x - pl_x) <= 50:
@@ -633,8 +663,9 @@ def start():
         screen.blit(font.render(f'Здоровье: {str(pl_xp)}', True, (0, 0, 0)), (375, 5))
         clock.tick(fps)
         pygame.display.update()
-pygame.quit()
 
+
+pygame.quit()
 
 if __name__ == '__main__':
     pygame.init()
