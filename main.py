@@ -660,7 +660,8 @@ def start():
             bullet.draw(screen)
         particle_group.update()
         particle_group.draw(screen)
-        screen.blit(font.render(f'Здоровье: {str(pl_xp)}', True, (0, 0, 0)), (375, 5))
+        screen.blit(font.render(
+            f'Здоровье: {str(pl_xp)}', True, (0, 0, 0)), (375, 5))
         clock.tick(fps)
         pygame.display.update()
 
